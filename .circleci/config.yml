@@ -25,6 +25,8 @@ jobs:
   bugfix-job-dummy:
     docker:
       - image: 'alpine:latest'
+    steps:
+      - run: echo "Bugfix Job Dummy"
   common-post-processing:
     docker:
       - image: 'alpine:latest'
