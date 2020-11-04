@@ -1,4 +1,3 @@
-
 version: 2.1
 jobs:
   file-validation:
@@ -84,7 +83,7 @@ workflows:
           filters:
             branches:
               only:
-                - /bugfix[/].*/
+                - /defect[/].*/
       - common-post-processing:
           requires:
             - file-validation
