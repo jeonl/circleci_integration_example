@@ -12,6 +12,9 @@ jobs:
           root: .
           paths:
             - .
+  jira-notify:
+    docker:
+      - image: curlimages/curl
   common-job-except-master-dummy:
     docker:
       - image: 'alpine:latest'
@@ -64,7 +67,8 @@ jobs:
 workflows:
   typical-workflow:
     jobs:
-      - file-validation:
+      - file-validation
+      - jira-notify:
           post-steps:
             - jira/notify # Runs the Jira's "notify" commands after a build has finished its steps.
       - common-job-except-master-dummy:
