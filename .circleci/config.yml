@@ -12,34 +12,24 @@ jobs:
           root: .
           paths:
             - .
-    post-steps:
-      - jira/notify # Runs the Jira's "notify" commands after a build has finished its steps.
   common-job-except-master-dummy:
     docker:
       - image: 'alpine:latest'
     steps:
       - run: echo "Common job except master branch"
-    post-steps:
-      - jira/notify # Runs the Jira's "notify" commands after a build has finished its steps.
   feature-job-dummy:
     docker:
       - image: 'alpine:latest'
     steps:
       - run: echo "Feature specific jobs"
-    post-steps:
-      - jira/notify # Runs the Jira's "notify" commands after a build has finished its steps.
   bugfix-job-dummy:
     docker:
       - image: 'alpine:latest'
-    steps:
-      - run: echo "Bugfix specific jobs"
   common-post-processing:
     docker:
       - image: 'alpine:latest'
     steps:
       - run: echo "Post processing"
-    post-steps:
-      - jira/notify # Runs the Jira's "notify" commands after a build has finished its steps.      
   deploy:
     docker:
       - image: 'amazon/aws-cli:latest'
@@ -69,8 +59,6 @@ jobs:
           name: Capture resources whether it succeeds to upload the file or nor
           when: always
           command: echo "Add a capture command here."
-    post-steps:
-      - jira/notify # Runs the Jira's "notify" commands after a build has finished its steps.
 workflows:
   typical-workflow:
     jobs:
