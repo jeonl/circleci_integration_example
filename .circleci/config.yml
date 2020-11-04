@@ -2,9 +2,10 @@ version: 2.1
 jobs:
   checkout-source:
     docker:
-      - image: 'amazon/aws-cli:latest'
+      - image: 'amazonlinux:latest'
     steps:
       - checkout
+      - run: yum install -y tar gzip
       - persist_to_workspace:
           root: .
           paths:
@@ -18,13 +19,11 @@ jobs:
       - run: pip install pandas==1.1.4      
   yum-install-test:
     docker:
-      -image: 'amazonlinux:latest'
+      - image: 'amazonlinux:latest'
     steps:
       - attach_workspace:
           at: .    
-      - run:
-          name: Install tar and gzip packages
-          command: yum install -y tar gzip
+      - run: yum install -y tar gzip
   docstring-test:
     docker:
       - image: 'python:3.7'
