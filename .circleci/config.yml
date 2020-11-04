@@ -1,14 +1,124 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
-# Use a package of configuration called an orb.
-orbs:
-  # Declare a dependency on the welcome-orb
-  welcome: circleci/welcome-orb@0.4.1
-# Orchestrate or schedule a set of jobs
+jobs:
+  checkout-source:
+    docker:
+      - image: 'amazonlinux:latest'
+    steps:
+      - checkout
+      - run: yum install -y tar gzip
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  pip-install-test:
+    docker:
+      - image: 'python:3.7'
+    steps:
+      - attach_workspace:
+          at: .    
+      - run: pip install pandas==1.1.4      
+  yum-install-test:
+    docker:
+      - image: 'amazonlinux:latest'
+    steps:
+      - run: yum install -y tar gzip
+      - attach_workspace:
+          at: .
+      - run: yum install -y httpd
+  docstring-test:
+    docker:
+      - image: 'python:3.7'
+    steps:
+      - attach_workspace:
+          at: .    
+      - run:
+          name: 'Run Doctest through Pytest'
+          command: |
+            pip install docstring==0.1.2.4
+            pip install pytest==6.1.2
+            pytest --doctest-modules
+  black-test:
+    docker:
+      - image: 'python:3.7'
+    steps:
+      - attach_workspace:
+          at: .    
+      - run:
+          name: 'Run a code style check through Black'
+          command: |
+            pip install black==20.8b1
+            python -m black .
+  remove-magic-commands:
+    docker:
+      - image: 'python:3.7'
+    steps:
+      - run: python -c "print(2+3)"
+  prepare-configuration-files:
+    docker:
+      - image: 'alpine:latest'
+    steps:
+      - run: echo "Please define any commands to masage files ..."
+  deploy:
+    docker:
+      - image: 'amazon/aws-cli:latest'
+        environment:
+          AWS_ENV_SET_CMD: 'aws configure set'
+          AWS_PROFILE: default
+          AWS_OUTPUT: json
+          AWS_REGION: us-east-1
+          S3_LOCATION: 's3://jeonl-circleci-sec-test'
+    steps:
+      # To use attach_workspace in CircleCI it requires to install tar and gzip commands.
+      - run:
+          name: Install tar and gzip packages
+          command: yum install -y tar gzip
+      # Mount a workspace
+      - attach_workspace:
+          at: .
+      - run:
+          name: Configure AWS configurations
+          command: |
+            mkdir -p ~/.aws && echo -e "[${AWS_PROFILE}]" > ~/.aws/config
+            printf "${AWS_ACCESS_KEY_ID}\n${AWS_SECRET_ACCESS_KEY}\n${AWS_REGION}\n${AWS_OUTPUT}" | aws configure
+      - run:
+          name: Upload the file into S3 bucket
+          command: aws s3 cp notebook_test.nbconvert.ipynb ${S3_LOCATION}
+      - run:
+          name: Capture resources whether it succeeds to upload the file or nor
+          when: always
+          command: echo "Add a capture command here."
 workflows:
-  # Name the workflow "welcome"
-  welcome:
-    # Run the welcome/run job in its own container
+  general-workflow:
     jobs:
-      - welcome/run
-
+      - checkout-source
+      - pip-install-test:
+          requires:
+            - checkout-source
+      - yum-install-test:
+          requires:
+            - checkout-source
+      - docstring-test:
+          requires:
+            - pip-install-test
+            - yum-install-test
+      - black-test:
+          requires:
+            - pip-install-test
+            - yum-install-test         
+      - remove-magic-commands:
+          requires:
+            - docstring-test
+            - black-test
+      - prepare-configuration-files:
+          requires:
+            - docstring-test
+            - black-test
+      - deploy:
+          requires:
+            - remove-magic-commands
+            - prepare-configuration-files
+          filters:
+            branches:
+              only: master
+          context:
+            - aws-context
