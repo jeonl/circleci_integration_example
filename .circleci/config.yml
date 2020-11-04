@@ -73,9 +73,12 @@ workflows:
       - jira-notify:
           post-steps:
             - jira/notify # Runs the Jira's "notify" commands after a build has finished its steps.
+          requires:
+            - file-validation            
       - common-job-except-master-dummy:
           requires:
             - file-validation
+            - jira-notify
           filters:
             branches:
               ignore:
