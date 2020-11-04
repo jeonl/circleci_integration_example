@@ -21,10 +21,11 @@ jobs:
     docker:
       - image: 'amazonlinux:latest'
     steps:
-      - attach_workspace:
-          at: .    
       - run: yum install -y tar gzip
-  docstring-test:
+      - attach_workspace:
+          at: .
+      - run: yum install -y httpd
+docstring-test:
     docker:
       - image: 'python:3.7'
     steps:
