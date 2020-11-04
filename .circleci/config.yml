@@ -14,9 +14,9 @@ jobs:
             - .
   jira-notify:
     docker:
-      - image: curlimages/curl
+      - image: alpine:latest
     steps:
-      - run: echo "Start to notify to Jira"
+      - run: apk add curl jq
   common-job-except-master-dummy:
     docker:
       - image: 'alpine:latest'
