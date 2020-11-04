@@ -1,0 +1,100 @@
+
+version: 2.1
+jobs:
+  file-validation:
+    docker:
+      - image: 'jupyter/pyspark-notebook'
+    steps:
+      - checkout
+      - run: jupyter nbconvert --to notebook --execute notebook_test.ipynb
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  common-job-except-master-dummy:
+    docker:
+      - image: 'alpine:latest'
+    steps:
+      - run: echo "Common job except master branch"
+  feature-job-dummy:
+    docker:
+      - image: 'alpine:latest'
+    steps:
+      - run: echo "Feature specific jobs"
+  bugfix-job-dummy:
+    docker:
+      - image: 'alpine:latest'
+    steps:
+      - run: echo "Bugfix specific jobs"
+  common-post-processing:
+    docker:
+      - image: 'alpine:latest'
+    steps:
+      - run: echo "Post processing"
+  deploy:
+    docker:
+      - image: 'amazon/aws-cli:latest'
+        environment:
+          AWS_ENV_SET_CMD: 'aws configure set'
+          AWS_PROFILE: default
+          AWS_OUTPUT: json
+          AWS_REGION: us-east-1
+          S3_LOCATION: 's3://jeonl-circleci-sec-test'
+    steps:
+      # To use attach_workspace in CircleCI it requires to install tar and gzip commands.
+      - run:
+          name: Install tar and gzip packages
+          command: yum install -y tar gzip
+      # Mount a workspace
+      - attach_workspace:
+          at: .
+      - run:
+          name: Configure AWS configurations
+          command: |
+            mkdir -p ~/.aws && echo -e "[${AWS_PROFILE}]" > ~/.aws/config
+            printf "${AWS_ACCESS_KEY_ID}\n${AWS_SECRET_ACCESS_KEY}\n${AWS_REGION}\n${AWS_OUTPUT}" | aws configure
+      - run:
+          name: Upload the file into S3 bucket
+          command: aws s3 cp notebook_test.nbconvert.ipynb ${S3_LOCATION}
+      - run:
+          name: Capture resources whether it succeeds to upload the file or nor
+          when: always
+          command: echo "Add a capture command here."
+workflows:
+  typical-workflow:
+    jobs:
+      - file-validation
+      - common-job-except-master-dummy:
+          requires:
+            - file-validation
+          filters:
+            branches:
+              ignore:
+                - master
+      - feature-job-dummy:
+          requires:
+            - common-job-except-master-dummy
+          filters:
+            branches:
+              only:
+                - /feature[/].*/
+      - bugfix-job-dummy:
+          requires:
+            - common-job-except-master-dummy
+          filters:
+            branches:
+              only:
+                - /bugfix[/].*/
+      - common-post-processing:
+          requires:
+            - file-validation
+            - feature-job-dummy
+            - bugfix-job-dummy
+      - deploy:
+          requires:
+            - common-post-processing
+          filters:
+            branches:
+              only: master
+          context:
+            - aws-context
