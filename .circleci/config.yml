@@ -69,7 +69,9 @@ jobs:
       - run: echo "Please define any commands to masage files ..."
       - run:
           name: Make a dummy file
-          command: mkdir -p output 'echo "Created: $(date)" > output/example.txt' 
+          command: |
+            mkdir -p output
+            echo "Created: $(date)" > output/example.txt
       - persist_to_workspace:
           root: .
           paths:
