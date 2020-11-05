@@ -82,8 +82,11 @@ jobs:
       - aws-cli/setup:
           profile-name: default
       - run:
+          name: Make a dummy file
+          command: 'echo "Created: $(date)" > example.txt' 
+      - run:
           name: Upload the file into S3 bucket
-          command: aws s3 cp notebook_test.nbconvert.ipynb ${S3_LOCATION}
+          command: aws s3 cp example.txt ${S3_LOCATION}
 workflows:
   general-workflow:
     jobs:
