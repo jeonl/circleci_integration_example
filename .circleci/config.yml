@@ -33,7 +33,6 @@ jobs:
           at: .    
       - run:
           name: 'Run Doctest through Pytest'
-          halt_build_on_fail: false
           command: |
             pip install docstring==0.1.2.4
             pip install pytest==6.1.2
@@ -46,7 +45,6 @@ jobs:
           at: .    
       - run:
           name: 'Run a code style check through Black'
-          halt_build_on_fail: false
           command: |
             pip install black==20.8b1
             python -m black .
@@ -113,12 +111,12 @@ workflows:
                 - /(feature|defect)[/].*/            
       - remove-magic-commands:
           requires:
-            - docstring-test
-            - black-test
+            - pip-install-test
+            - yum-install-test
       - prepare-configuration-files:
           requires:
-            - docstring-test
-            - black-test
+            - pip-install-test
+            - yum-install-test
       - deploy:
           requires:
             - remove-magic-commands
