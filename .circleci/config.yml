@@ -127,8 +127,8 @@ workflows:
           requires:
             - remove-magic-commands
             - prepare-configuration-files
-#           filters:
-#             branches:
-#               only: master
+          filters:
+            branches:
+              only: master
           context:
             - aws-context
