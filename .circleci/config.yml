@@ -6,19 +6,18 @@ jobs:
     machine: true
     steps:
       - checkout
-#     executor: aws-cli/default
-#     steps:
-#       - checkout
-#       - persist_to_workspace:
-#           root: .
-#           paths:
-#             - .            
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .            
   pip-install-test:
     docker:
       - image: 'python:3.7'
     steps:
-#       - attach_workspace:
-#           at: .    
+      - attach_workspace:
+          at: .    
       - run: pip install pandas==1.1.4 
       - run: ls -al
   yum-install-test:
