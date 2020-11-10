@@ -90,6 +90,7 @@ jobs:
           name: Upload the file into S3 bucket
           command: aws s3 cp output/example.txt ${S3_LOCATION}
 workflows:
+  version: 2
   general-workflow:
     jobs:
       - checkout-source
